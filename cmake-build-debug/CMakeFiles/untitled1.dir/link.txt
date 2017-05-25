@@ -1,0 +1,1 @@
+/usr/bin/c++    -pthread -ldl -std=c++11  -g   CMakeFiles/untitled1.dir/main.cpp.o CMakeFiles/untitled1.dir/sqlite3.c.o  -o untitled1 -ldl 
