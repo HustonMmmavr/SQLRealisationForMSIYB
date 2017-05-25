@@ -48,7 +48,7 @@ struct SQLTableColumn: public ISQLTableColumn
     string _columnType;
     string _columnFlags;
 
-    SQLTableColumn(): _columnName(""), _columnType(""), _columnFlags("") {}
+    SQLTableColumn(): _columnName("\0"), _columnType("\0"), _columnFlags("\0") {}
     SQLTableColumn(const string &columnName, const string &columnType, const string &columnFlags="")
     {
         _columnName = columnName;
@@ -68,8 +68,10 @@ struct SQLiteTableColumn: public SQLTableColumn
         string result = _columnName;
         result += ' ';
         result += _columnType;
-        result += ' ';
-        result += _columnFlags;
+        if (_columnFlags != "") {
+            result += ' ';
+            result += _columnFlags;
+        }
         return result;
     }
     ~SQLiteTableColumn(){}
@@ -162,22 +164,21 @@ public:
         _dbName = dbName;
     }
 
-    void CreateTable(const char *tableName, ISQLTableColumn *column1, ...)
+    void CreateTable(const char *tableName, SQLTableColumn *column1, ...)
     {
         va_list list;
         va_start(list, column1);
         string queryString = "CREATE TABLE ";
-        queryString += _dbName + '.' + string(tableName);
-        queryString += '(';
-        for (ISQLTableColumn *col = column1; col != NULL; col = va_arg(list, ISQLTableColumn*))
+        queryString += string(tableName);
+        queryString += "(\n";
+        for (SQLTableColumn *col = column1; col != NULL; col = va_arg(list, SQLTableColumn*))
         {
             queryString += ((SQLiteTableColumn*)(col))->ToString();
-            queryString += ',';
+            queryString += ",\n";
         }
-        queryString[queryString.length() - 1] = '\0';
-        queryString += ')';
+        queryString.replace(queryString.length() - 2, 1, "\n);");
         va_end ( list );
-        std::cout<<queryString<<std::endl;// Cleans up the list
+        std::cout<<queryString.c_str()<<std::endl;// Cleans up the list
         realisation->ExecuteQuery(queryString.c_str());
     }
 };
@@ -193,15 +194,16 @@ int main()
         manager->Connect("newDatabase");
         ///SQ
         SQLTableColumn column1, column2, column3;
-        column1._columnType = "INT";
-        column1._columnName = "ID";
-        column1._columnFlags = "PRIMARY KEY NOT NULL";
 
-        column2._columnType = "CHAR";
-        column2._columnName = "Name";
+        column1._columnType = "int";
+        column1._columnName = "ID1";
+        column1._columnFlags = "NOT NULL";
 
-        column3._columnType = "INT";
-        column3._columnName = "Count";
+        column2._columnType = "int";
+        column2._columnName = "Names";
+
+        column3._columnType = "int";
+        column3._columnName = "Counter";
 
         manager->CreateTable("NewTable", &column1, &column2, &column3);
         std::cout << "Hello, World!" << std::endl;
@@ -211,4 +213,10 @@ int main()
     {
         std::cout<<e.what()<<std::endl;
     }
+    catch (Exception* e)
+    {
+        std::cout<<e->what()<<std::endl;
+
+    }
+
 }
