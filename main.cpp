@@ -56,7 +56,7 @@ struct SQLTableColumn: public ISQLTableColumn
         _columnFlags = columnFlags;
     }
 
-    virtual string ToString() {};
+    virtual string ToString() {}
 };
 
 
@@ -164,16 +164,17 @@ public:
         _dbName = dbName;
     }
 
-    void CreateTable(const char *tableName, SQLTableColumn *column1, ...)
+    void CreateTable(const char *tableName, int numColumns, ...)
     {
         va_list list;
-        va_start(list, column1);
+        va_start(list, numColumns);
         string queryString = "CREATE TABLE ";
         queryString += string(tableName);
         queryString += "(\n";
-        for (SQLTableColumn *col = column1; col != NULL; col = va_arg(list, SQLTableColumn*))
+        for (int i = 0; i < numColumns; i++)
         {
-            queryString += ((SQLiteTableColumn*)(col))->ToString();
+            SQLiteTableColumn *col = va_arg(list, SQLiteTableColumn*);
+            queryString += col->ToString();
             queryString += ",\n";
         }
         queryString.replace(queryString.length() - 2, 1, "\n);");
@@ -205,7 +206,7 @@ int main()
         column3._columnType = "int";
         column3._columnName = "Counter";
 
-        manager->CreateTable("NewTable", &column1, &column2, &column3);
+        manager->CreateTable("NewTable", 3,  &column1, &column2, &column3);
         std::cout << "Hello, World!" << std::endl;
         return 0;
     }
